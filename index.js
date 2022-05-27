@@ -39,6 +39,7 @@ async function run() {
         const productsCollection = client.db('car_manufacturer').collection('products')
         const ordersCollection = client.db('car_manufacturer').collection('orders')
         const clientsCollection = client.db('car_manufacturer').collection('clients')
+        const reviewsCollection = client.db('car_manufacturer').collection('reviews')
 
 
         app.get('/products', async (req, res) => {
@@ -99,11 +100,21 @@ async function run() {
           app.delete('/order/:email',verifyJWT,async (req, res) => {
             const email = req.params.email;
             const filter = {client: email}
-            console.log(filter);
-            const result = await ordersCollection.deleteOne(filter)
+          const result = await ordersCollection.deleteOne(filter)
             res.send(result)
           })
           
+          app.post('/review', async (req, res) => {
+            const review = req.body;
+            const query = { product: review.product, client: review.client }
+            const exists = await reviewsCollection.findOne(query)
+            if (exists) {
+              return res.send({ success: false, order: exists })
+            }
+      
+            const result = await reviewsCollection.insertOne(review)
+            res.send({ success: true, result })
+          })
          
     }
     finally {
