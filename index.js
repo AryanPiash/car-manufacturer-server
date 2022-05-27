@@ -69,9 +69,8 @@ async function run() {
           })
 
 
-          app.get('/order', verifyJWT, async (req, res) => {
+          app.get('/order', verifyJWT, async(req, res) => {
             const client = req.query.client;
-            
             const decodedEmail = req.decoded.email;
             if (client === decodedEmail) {
               const query = { client: client }
@@ -96,8 +95,16 @@ async function run() {
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
             res.send({ result, token })
           })
-          
 
+          app.delete('/order/:email',verifyJWT,async (req, res) => {
+            const email = req.params.email;
+            const filter = {client: email}
+            console.log(filter);
+            const result = await ordersCollection.deleteOne(filter)
+            res.send(result)
+          })
+          
+         
     }
     finally {
 
