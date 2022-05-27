@@ -18,6 +18,7 @@ async function run() {
     try {
         await client.connect();
         const productsCollection = client.db('car_manufacturer').collection('products')
+        const ordersCollection = client.db('car_manufacturer').collection('orders')
 
 
         app.get('/products', async (req, res) => {
@@ -33,6 +34,19 @@ async function run() {
             const product = await productsCollection.findOne(query)
             res.send(product)
           })   
+
+
+          app.post('/order', async (req, res) => {
+            const order = req.body;
+            const query = { product: order.product, client: order.client }
+            const exists = await ordersCollection.findOne(query)
+            if (exists) {
+              return res.send({ success: false, order: exists })
+            }
+      
+            const result = await ordersCollection.insertOne(order)
+            res.send({ success: true, result })
+          })
 
     }
     finally {
