@@ -37,6 +37,7 @@ async function run() {
         await client.connect();
         const productsCollection = client.db('car_manufacturer').collection('products')
         const ordersCollection = client.db('car_manufacturer').collection('orders')
+        const clientsCollection = client.db('car_manufacturer').collection('clients')
 
 
         app.get('/products', async (req, res) => {
@@ -64,6 +65,24 @@ async function run() {
       
             const result = await ordersCollection.insertOne(order)
             res.send({ success: true, result })
+          })
+
+          app.get('/order', verifyJWT, async (req, res) => {
+            const client = req.query.patient;
+            const decodedEmail = req.decoded.email;
+            if (client === decodedEmail) {
+              const query = { client: client }
+              const orders = await ordersCollection.find(query).toArray()
+              return res.send(orders)
+            }
+            else {
+              return res.status(403).send({ message: 'Forbidden access' })
+            }
+          })
+
+          app.get('/clients', verifyJWT, async (req, res) => {
+            const clients = await clientsCollection.find().toArray();
+            res.send(clients)
           })
 
     }
