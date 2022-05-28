@@ -43,6 +43,17 @@ async function run() {
     const profileCollection = client.db('car_manufacturer').collection('profile')
 
 
+    const verifyAdmin = async (req, res, next) => {
+      const requester = req.decoded.email;
+      const requesterAccount = await clientsCollection.findOne({ email: requester })
+      if(requesterAccount.role === 'Admin') {
+        next()
+      }
+      else {
+        res.status(403).send({ message: 'Forbidden' })
+      }
+    }
+
     app.get('/products', async (req, res) => {
       const query = {}
       const cursor = productsCollection.find(query)
@@ -87,6 +98,7 @@ async function run() {
     app.put('/clients/:email', async (req, res) => {
       const email = req.params.email;
       const clients = req.body;
+      console.log(clients);
       const filter = { email: email }
       const options = { upsert: true };
       const updateDoc = {
@@ -124,7 +136,12 @@ async function run() {
       res.send({ success: true, result })
     })
 
-
+    app.get('/profile/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email }
+      const profile = await profileCollection.findOne(query)
+      res.send(profile)
+    })
 
     app.put('/profile/:email', async (req, res) => {
       const email = req.params.email;
@@ -139,12 +156,42 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/profile/:email', async (req, res) => {
+    // Get user from clients
+    app.get('/clients/:email', async (req, res) => {
       const email = req.params.email;
       const query = { email: email }
-      const profile = await profileCollection.findOne(query)
-      res.send(profile)
+      const client = await clientsCollection.findOne(query)
+      res.send(client)
     })
+
+
+
+
+    app.get('/clients', verifyJWT, async (req, res) => {
+      const clients = await clientsCollection.find().toArray();
+      res.send(clients)
+    })
+
+
+    app.get('/admin/:email', async (req, res) => {
+      const email = req.params.email;
+      const client = await clientsCollection.findOne({email: email})
+      const isAdmin = client.role === 'Admin'
+      res.send({admin: isAdmin})
+    })
+
+    app.put('/clients/admin/:email',verifyJWT,  async (req, res) => {
+      const email = req.params.email;
+        const filter = { email: email }
+        const updateDoc = {
+          $set: { role: 'Admin' }
+        };
+        const result = await clientsCollection.updateOne(filter, updateDoc)
+        res.send(result)
+      
+    })
+
+
 
 
   }
