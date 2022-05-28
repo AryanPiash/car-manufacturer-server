@@ -40,6 +40,7 @@ async function run() {
         const ordersCollection = client.db('car_manufacturer').collection('orders')
         const clientsCollection = client.db('car_manufacturer').collection('clients')
         const reviewsCollection = client.db('car_manufacturer').collection('reviews')
+        const profileCollection = client.db('car_manufacturer').collection('profile')
 
 
         app.get('/products', async (req, res) => {
@@ -103,6 +104,13 @@ async function run() {
           const result = await ordersCollection.deleteOne(filter)
             res.send(result)
           })
+
+
+          app.get('/review', async (req, res) => {
+            const query = {}
+            const reviews = await reviewsCollection.find(query).toArray()
+            res.send(reviews)
+          })
           
           app.post('/review', async (req, res) => {
             const review = req.body;
@@ -115,6 +123,23 @@ async function run() {
             const result = await reviewsCollection.insertOne(review)
             res.send({ success: true, result })
           })
+
+
+
+          app.post('/profile', async (req, res) => {
+            const profile = req.body;
+            const query = { name: profile.name, email: profile.email }
+            const exists = await profileCollection.findOne(query)
+            if (exists) {
+              return res.send({ success: false, order: exists })
+            }
+      
+            const result = await profileCollection.insertOne(profile)
+            res.send({ success: true, result })
+          })
+
+
+
          
     }
     finally {
