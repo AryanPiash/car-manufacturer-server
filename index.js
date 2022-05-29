@@ -23,7 +23,7 @@ function verifyJWT(req, res, next) {
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
     if (err) {
-      return res.status(403).send({ message: 'Forbidden access' })
+      return res.status(403).send({ message: 'Forbidden access JWT' })
     }
     req.decoded = decoded;
     next()
@@ -68,7 +68,15 @@ async function run() {
       res.send(product)
     })
 
+    
+    app.delete('/product/:id', verifyJWT,verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) }
+      const result = await productsCollection.deleteOne(filter)
+      res.send(result)
+    })
 
+    
     app.post('/order', async (req, res) => {
       const order = req.body;
       const query = { product: order.product, client: order.client }
@@ -82,6 +90,7 @@ async function run() {
     })
 
 
+
     app.get('/order', verifyJWT, async (req, res) => {
       const client = req.query.client;
       const decodedEmail = req.decoded.email;
@@ -91,14 +100,21 @@ async function run() {
         return res.send(orders)
       }
       else {
-        return res.status(403).send({ message: 'Forbidden access' })
+        return res.status(403).send({ message: 'Forbidden access Get Order' })
       }
+
+    })
+
+    app.get('/orders', async (req, res) => {
+      const query = {}
+      const cursor = ordersCollection.find(query)
+      const orders = await cursor.toArray()
+      res.send(orders)
     })
 
     app.put('/clients/:email', async (req, res) => {
       const email = req.params.email;
       const clients = req.body;
-      console.log(clients);
       const filter = { email: email }
       const options = { upsert: true };
       const updateDoc = {
@@ -110,7 +126,7 @@ async function run() {
       res.send({ result, token })
     })
 
-    app.delete('/order/:email', verifyJWT, async (req, res) => {
+    app.delete('/order/:email', verifyJWT,verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const filter = { client: email }
       const result = await ordersCollection.deleteOne(filter)
@@ -191,7 +207,17 @@ async function run() {
       
     })
 
+    app.post('/products', async (req, res) => {
+      const product = req.body;
+      const query = { name: product.name }
+      const exists = await productsCollection.findOne(query)
+      if (exists) {
+        return res.send({ success: false, order: exists })
+      }
 
+      const result = await productsCollection.insertOne(product)
+      res.send({ success: true, result })
+    })
 
 
   }
