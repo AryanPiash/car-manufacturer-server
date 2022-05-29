@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 const app = express()
-const port = process.env.PORT | 5000
+const port = process.env.PORT || 5000
 
 app.use(cors())
 app.use(express.json())
@@ -37,6 +37,7 @@ function verifyJWT(req, res, next) {
 async function run() {
   try {
     await client.connect();
+    console.log('connected');
     const productsCollection = client.db('car_manufacturer').collection('products')
     const ordersCollection = client.db('car_manufacturer').collection('orders')
     const clientsCollection = client.db('car_manufacturer').collection('clients')
